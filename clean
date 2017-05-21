@@ -1,0 +1,45 @@
+#! /usr/local/bin/php
+<?php
+
+$logFileName = 'clean.log';
+
+// Validation
+if ($argc > 2) {
+    if (is_dir($argv[1])) {
+        $dir = $argv[1];
+        $dir = rtrim($dir, '/');
+    } else
+        exit('Please specify a valid path!');
+
+    if (isset($argv[2]) && is_numeric($argv[2]) && $argv[2] > 0)
+        $days = $argv[2];
+    else
+        exit('Please specify a valid days number to clear the oldest files!');
+
+    if (isset($argv[3]) && is_numeric($argv[3]) && $argv[2] > 0)
+        $numOfFiles = $argv[3];
+    else
+        exit('Please specify a valid number of files to clean!');
+} else
+    exit('Please specify a valid args!');
+
+if ($handle = opendir($dir)) {
+    $i = 0;
+    while (false !== ($entry = readdir($handle))) {
+        $file = $dir . '/' . $entry;
+
+        if (is_file($file)) {
+            if (filemtime($file) < (time() - (60 * 60 * 24 * $days))) {
+                if (unlink($file))
+                    file_put_contents($logFileName, time() . " : file '$file' has been successfully deleted!\n", FILE_APPEND);
+                else
+                    file_put_contents($logFileName, time() . " : failed to delete file '$file'!\n", FILE_APPEND);
+            }
+        }
+        if (++$i == $numOfFiles) {
+            sleep(1);
+            $i = 0;
+        }
+    }
+    closedir($handle);
+}
