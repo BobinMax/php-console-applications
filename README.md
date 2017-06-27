@@ -13,3 +13,14 @@ First argument is path to directory to be cleaned
 Second argument is number of days during file hasn't been modified and should be removed
 
 Third argument is number of files which application removes per second
+
+#### findspam
+This application can be used to find repeated email addresses in a log file.
+
+##### Usage:
+
+```php findspam /path/to/file 1000```
+
+First argument is path to a log file
+
+The second argument is the number of emails that will generate a warning if exceeded.

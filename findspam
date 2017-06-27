@@ -1,0 +1,39 @@
+#! /usr/local/bin/php
+<?php
+
+// Validation
+if ($argc > 2) {
+    if (is_file($argv[1])) {
+        $file = $argv[1];
+    } else
+        exit('Please specify a valid path to target log file!');
+
+    if (isset($argv[2]) && is_numeric($argv[2]) && $argv[2] > 0)
+        $emailLimit = $argv[2];
+    else
+        exit('Please specify a valid number of emails limit!');
+} else
+    exit('Please specify a valid args!');
+
+$file = new SplFileObject($file);
+$emails = [];
+$emailPattern = '/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i';
+$warningEmailList = [];
+
+while (!$file->eof()) {
+    $line = $file->fgets();
+    if (mb_strpos($line, 'status=')) {
+        if (preg_match($emailPattern, $line, $matches)) {
+//            $email['line'] = $line;
+//            $email['matches'] = $matches;
+//            $emails[$matches[0]][] = $email;
+            $emails[$matches[0]]['count']++;
+
+            if($emails[$matches[0]]['count'] >= $emailLimit) {
+                $warningEmailList[$matches[0]] = $emails[$matches[0]]['count'];
+            }
+        }
+    }
+}
+
+var_dump($warningEmailList);
