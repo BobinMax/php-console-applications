@@ -1,4 +1,4 @@
-#! /usr/local/bin/php
+#! /usr/bin/php
 <?php
 
 // Validation
@@ -16,20 +16,53 @@ if ($argc > 2) {
     exit('Please specify a valid args!');
 
 $file = new SplFileObject($file);
+
 $emails = [];
 $emailPattern = '/[\._a-zA-Z0-9-]+@[\._a-zA-Z0-9-]+/i';
 $warningEmailList = [];
 
+$startTime = microtime(true);
+
+$fileSize = $file->getSize();
+$percentage = 0;
+
+passthru('tput reset');
+passthru('tput civis');
+passthru('tput cup 0 0');
+
+echo 'Progress: ' . $percentage . '% ';
+
+$percentage++;
+
+$lengthFfAllReadedLines = strlen($file->fgets());
+$averageLineLength = $lengthFfAllReadedLines;
+
+$file->rewind();
+
 while (!$file->eof()) {
+    $averageLineNumber = $fileSize / $averageLineLength;
+    $linePerPercent = $averageLineNumber / 100;
+
+    if ($file->key() > ($linePerPercent * $percentage) && $percentage < 100) {
+        $percentage++;
+        passthru('tput cup 0 0');
+        echo 'Progress: ' . $percentage . '% ';
+    }
+
     $line = $file->fgets();
+
+    $lengthFfAllReadedLines += strlen($line);
+    $averageLineLength = ($lengthFfAllReadedLines / ($file->key() + 1));
     if (mb_strpos($line, 'status=')) {
         if (preg_match($emailPattern, $line, $matches)) {
-//            $email['line'] = $line;
-//            $email['matches'] = $matches;
-//            $emails[$matches[0]][] = $email;
+            if (!isset($emails[$matches[0]])) {
+                $emails[$matches[0]] = [];
+                $emails[$matches[0]]['count'] = 0;
+            }
+
             $emails[$matches[0]]['count']++;
 
-            if($emails[$matches[0]]['count'] >= $emailLimit) {
+            if ($emails[$matches[0]]['count'] >= $emailLimit) {
                 $warningEmailList[$matches[0]] = $emails[$matches[0]]['count'];
             }
         }
@@ -37,3 +70,5 @@ while (!$file->eof()) {
 }
 
 var_dump($warningEmailList);
+echo 'Total time spent seconds: ' . (microtime(true) - $startTime) . PHP_EOL;
+passthru('tput cnorm');
